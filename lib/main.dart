@@ -2,7 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:olx_flutter/config/config.dart';
 import 'package:olx_flutter/config/firebase_options.dart';
-import 'package:olx_flutter/views/login.dart';
+import 'package:olx_flutter/config/route_generator.dart';
 
 void main() async {
 
@@ -14,7 +14,8 @@ void main() async {
   
   runApp(MaterialApp(
     title: "OLX",
-    home: const Login(),
     theme: tema,
+    initialRoute: "/",
+    onGenerateRoute: RouteGenerator.generateRoute,
   ));
 }

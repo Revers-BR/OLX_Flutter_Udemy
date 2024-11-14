@@ -41,7 +41,7 @@ class _Login extends State<Login> {
       email: usuario.email, 
       password: usuario.senha
     ).then((firebaseUser){
-      
+      Navigator.pushReplacementNamed(context, "/");
     }).catchError(
       (_){
         setState(() => _mensagemErro = "Usuário ou senha inválido!");
