@@ -10,8 +10,6 @@ class MeusAnuncios extends StatefulWidget {
 
 class _MeusAnuncios extends State<MeusAnuncios> {
 
-  final GlobalKey _formKey  = GlobalKey<FormState>();
-
   @override
   Widget build(BuildContext context) {
     
@@ -22,17 +20,6 @@ class _MeusAnuncios extends State<MeusAnuncios> {
       floatingActionButton: FloatingActionButton(
         onPressed: () => Navigator.pushNamed(context, "/novo-anuncio"),
         child: const Icon(Icons.add),
-      ),
-      body: SingleChildScrollView(
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          child: Form(
-            key: _formKey,
-            child: const Column(children: [
-
-            ],)
-          ),
-        ),
       ),
     );
   }
