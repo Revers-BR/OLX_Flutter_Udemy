@@ -1,7 +1,9 @@
 import 'dart:io';
 import 'package:brasil_fields/brasil_fields.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:olx_flutter/views/widget/input_customizado.dart';
 import 'package:validadores/Validador.dart';
 
 class Anuncio extends StatefulWidget {
@@ -15,6 +17,10 @@ class Anuncio extends StatefulWidget {
 class _Anuncio extends State<Anuncio> {
 
   final GlobalKey<FormState> _formKey  = GlobalKey<FormState>();
+  final TextEditingController _controllerTitulo = TextEditingController();
+  final TextEditingController _controllerPreco = TextEditingController();
+  final TextEditingController _controllerTelefone = TextEditingController();
+  final TextEditingController _controllerDescricao = TextEditingController();
 
   final List<DropdownMenuItem<String>> _itensDropEstados = [];
   final List<DropdownMenuItem<String>> _itensDropCategorias = [];
@@ -64,9 +70,11 @@ class _Anuncio extends State<Anuncio> {
   Widget build(BuildContext context) {
     
     return Scaffold(
+      
       appBar: AppBar(
         title:  const Text("Novo Anúncio"),
       ),
+      
       body: SingleChildScrollView(
         child: Container(
           padding: const EdgeInsets.all(16),
@@ -75,6 +83,7 @@ class _Anuncio extends State<Anuncio> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                
                 FormField(
                   initialValue: _imagens,
                   validator: (imagens) {
@@ -225,7 +234,70 @@ class _Anuncio extends State<Anuncio> {
                   ),
                 ]),
 
-                Text("Caixa de textos"),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: InputCustomizado(
+                    controller: _controllerTitulo, 
+                    hintText: "Titulo",
+                    validator: (valor) {
+                      return Validador()
+                        .add(Validar.OBRIGATORIO, msg: "Campo obrigatório!")
+                        .valido(valor);
+                    },
+                  ),
+                ),
+
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: InputCustomizado(
+                    controller: _controllerPreco, 
+                    hintText: "Preço",
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      CentavosInputFormatter(moeda: true)
+                    ],
+                    validator: (valor) {
+                      return Validador()
+                        .add(Validar.OBRIGATORIO, msg: "Campo obrigatório!")
+                        .valido(valor);
+                    },
+                  ),
+                ),
+
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: InputCustomizado(
+                    controller: _controllerTelefone, 
+                    hintText: "Telefone",
+                    keyboardType: TextInputType.phone,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      TelefoneInputFormatter()
+                    ],
+                    validator: (valor) {
+                      return Validador()
+                        .add(Validar.OBRIGATORIO, msg: "Campo obrigatório!")
+                        .valido(valor);
+                    },
+                  ),
+                ),
+                
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: InputCustomizado(
+                    controller: _controllerDescricao, 
+                    hintText: "Descrição (200 caracteres)",
+                    maxLines: null,
+                    validator: (valor) {
+                      return Validador()
+                        .add(Validar.OBRIGATORIO, msg: "Campo obrigatório!")
+                        .maxLength(200, msg: "Máximo de 200 caracteres")
+                        .valido(valor);
+                    },
+                  ),
+                ),
+
                 FilledButton(
                   onPressed: (){
                     if(_formKey.currentState!.validate()){
