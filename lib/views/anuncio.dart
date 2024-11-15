@@ -1,7 +1,8 @@
 import 'dart:io';
+import 'package:brasil_fields/brasil_fields.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:validadores/Validador.dart';
 
 class Anuncio extends StatefulWidget {
 
@@ -15,7 +16,13 @@ class _Anuncio extends State<Anuncio> {
 
   final GlobalKey<FormState> _formKey  = GlobalKey<FormState>();
 
+  final List<DropdownMenuItem<String>> _itensDropEstados = [];
+  final List<DropdownMenuItem<String>> _itensDropCategorias = [];
+
   final List<File> _imagens = [];
+
+  String? _itemSelecionadoEstado;
+  String? _itemSelecionadoCategoria;
 
   void _selecionarImagemGaleria() async {
 
@@ -26,6 +33,31 @@ class _Anuncio extends State<Anuncio> {
 
       setState(() => _imagens.add(imagemSelecionado));
     }
+  }
+
+  void _carregarItensDropdown(){
+
+    for (var estado in Estados.listaEstadosSigla) {
+      _itensDropEstados.add(
+        DropdownMenuItem(
+          value: estado,
+          child: Text(estado),
+        )
+      );
+    }
+
+    _itensDropCategorias.addAll(const [
+      DropdownMenuItem(value: "auto",   child: Text("Automóvel")),
+      DropdownMenuItem(value: "eletro", child: Text("Eletrônicos")),
+      DropdownMenuItem(value: "imovel", child: Text("Imóvel")),
+      DropdownMenuItem(value: "moda",   child: Text("Moda")),
+    ]);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarItensDropdown();
   }
 
   @override
@@ -144,10 +176,55 @@ class _Anuncio extends State<Anuncio> {
                     ]);
                   },
                 ),
+                
                 Row(children: [
-                  Text("Estado"),
-                  Text("Categoria")
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.all(8),
+                      child: DropdownButtonFormField(
+                        value: _itemSelecionadoEstado,
+                        hint: Text("Estados"),
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 20
+                        ),
+                        items: _itensDropEstados,
+                        validator: (value) => Validador()
+                          .add(Validar.OBRIGATORIO, msg: "Campo obrigatório!")
+                          .valido(value),
+                        onChanged: (value) {
+                          setState(() {
+                            _itemSelecionadoEstado = value;
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.all(8),
+                      child: DropdownButtonFormField(
+                        value: _itemSelecionadoCategoria,
+                        hint: Text("Categorias"),
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 20
+                        ),
+                        items: _itensDropCategorias,
+                        validator: (value) => Validador()
+                          .add(Validar.OBRIGATORIO, msg: "Campo obrigatório!")
+                          .valido(value),
+                        onChanged: (value) {
+                          setState(() {
+                            _itemSelecionadoCategoria = value;
+                          });
+                        },
+                      ),
+                    ),
+                  ),
                 ]),
+
                 Text("Caixa de textos"),
                 FilledButton(
                   onPressed: (){
