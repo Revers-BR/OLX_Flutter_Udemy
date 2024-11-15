@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:olx_flutter/views/anuncio.dart';
 import 'package:olx_flutter/views/anuncios.dart';
 import 'package:olx_flutter/views/login.dart';
+import 'package:olx_flutter/views/meus_anuncios.dart';
 
 class RouteGenerator {
 
@@ -17,8 +19,12 @@ class RouteGenerator {
       case "/login":
         view = const Login();
         break;
-      // case "/meus-anuncios":
-      //   break;
+      case "/novo-anuncio":
+        view = const Anuncio();
+        break;
+      case "/meus-anuncios":
+        view = const MeusAnuncios();
+        break;
       default:
         return erroRota();
     }

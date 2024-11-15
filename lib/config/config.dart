@@ -8,6 +8,10 @@ final tema = ThemeData(
     foregroundColor: Colors.white,
     backgroundColor: _backgroundColor
   ),
+  floatingActionButtonTheme: const FloatingActionButtonThemeData(
+    backgroundColor: _backgroundColor,
+    foregroundColor: Colors.white
+  ),
   filledButtonTheme: const FilledButtonThemeData(
     style: ButtonStyle(
       backgroundColor: MaterialStatePropertyAll(_backgroundColor)

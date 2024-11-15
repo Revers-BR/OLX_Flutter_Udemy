@@ -20,7 +20,7 @@ class _Anuncios extends State<Anuncios> {
 
     switch (itemEscolhido) {
       case ItensMenu.meusAnuncios:
-        Navigator.pushReplacementNamed(context, ItensMenu.meusAnuncios);
+        Navigator.pushNamed(context, "/meus-anuncios");
         break;
       case ItensMenu.entrarCadastrar:
         Navigator.pushReplacementNamed(context, "/login");
