@@ -3,12 +3,13 @@ import 'package:flutter/services.dart';
 
 class InputCustomizado extends StatelessWidget {
 
-  final TextEditingController controller;
+  final int? maxLines;
+  final bool autofocus;
   final String hintText;
   final bool obscureText;
-  final bool autofocus;
   final TextInputType keyboardType;
-  final int? maxLines;
+  final TextEditingController controller;
+  final String? Function(String?)? onSaved;
   final String? Function(String?)? validator;
   final List<TextInputFormatter>? inputFormatters;
 
@@ -18,8 +19,9 @@ class InputCustomizado extends StatelessWidget {
     required this.controller,
     required this.hintText,
 
-    this.maxLines,
+    this.onSaved,
     this.validator,
+    this.maxLines = 1,
     this.inputFormatters,
     this.autofocus = false,
     this.obscureText = false,
@@ -29,14 +31,15 @@ class InputCustomizado extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TextFormField(
+      onSaved: onSaved,
+      maxLines: maxLines,
+      autofocus: autofocus,
+      validator: validator,
       controller: controller,
       obscureText: obscureText,
-      autofocus: autofocus,
-      maxLines: maxLines,
       keyboardType: keyboardType,
-      style: const TextStyle(fontSize: 20),
       inputFormatters: inputFormatters,
-      validator: validator,
+      style: const TextStyle(fontSize: 20),
       decoration: InputDecoration(
         contentPadding: const EdgeInsets.fromLTRB(32, 16, 32, 16),
         hintText: hintText,

@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:brasil_fields/brasil_fields.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:olx_flutter/models/anuncio.dart';
 import 'package:olx_flutter/views/widget/input_customizado.dart';
 import 'package:validadores/Validador.dart';
 
@@ -16,7 +19,9 @@ class Anuncio extends StatefulWidget {
 
 class _Anuncio extends State<Anuncio> {
 
+  final FirebaseStorage _storage = FirebaseStorage.instance;
   final GlobalKey<FormState> _formKey  = GlobalKey<FormState>();
+
   final TextEditingController _controllerTitulo = TextEditingController();
   final TextEditingController _controllerPreco = TextEditingController();
   final TextEditingController _controllerTelefone = TextEditingController();
@@ -27,8 +32,13 @@ class _Anuncio extends State<Anuncio> {
 
   final List<File> _imagens = [];
 
+  StreamSubscription<TaskSnapshot>? _streamSubscriptionUpload;
+
   String? _itemSelecionadoEstado;
   String? _itemSelecionadoCategoria;
+  bool _carregando = false;
+  String _msgErro = "";
+  late ModelAnuncio _anuncio;
 
   void _selecionarImagemGaleria() async {
 
@@ -60,10 +70,68 @@ class _Anuncio extends State<Anuncio> {
     ]);
   }
 
+  void _salvarAnuncio() {
+
+    _uploadImagens();
+  }
+
+  _uploadImagens() {
+
+    setState(() => _carregando = true);
+
+    final Reference pastaRaiz = _storage.ref();
+
+    for (var imagem in _imagens) {
+      
+      final nomeImagem = DateTime.now().millisecondsSinceEpoch.toString();
+
+      final Reference arquivo = pastaRaiz
+        .child("meus_arquivos")
+        .child( _anuncio.id )
+        .child( "$nomeImagem.jpg" );
+
+        final UploadTask uploadTask = arquivo.putFile( imagem );
+
+        _streamSubscriptionUpload = uploadTask.snapshotEvents.listen((snapshot) {
+          switch (snapshot.state) {
+            case TaskState.canceled:
+            case TaskState.error:
+            case TaskState.paused:
+              setState(() {
+                _carregando = false;
+                _msgErro = "erro ao fazer upload das imagens";
+              });
+              break;
+            case TaskState.running:
+              setState(() => _carregando = true);
+              break;
+            case TaskState.success:
+              snapshot.ref.getDownloadURL().then((url){
+                _anuncio.fotos.add( url );
+                setState(() => _carregando = false);
+              });
+          }
+        })..onError((error){
+          setState(() {
+                _carregando = false;
+                _msgErro = "erro ao fazer upload das imagens";
+              });
+        });
+    }
+
+  }
+
   @override
   void initState() {
     super.initState();
     _carregarItensDropdown();
+    _anuncio = ModelAnuncio();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    if(_streamSubscriptionUpload != null)_streamSubscriptionUpload!.cancel();
   }
 
   @override
@@ -83,7 +151,7 @@ class _Anuncio extends State<Anuncio> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                
+
                 FormField(
                   initialValue: _imagens,
                   validator: (imagens) {
@@ -191,6 +259,7 @@ class _Anuncio extends State<Anuncio> {
                     child: Padding(
                       padding: EdgeInsets.all(8),
                       child: DropdownButtonFormField(
+                        onSaved: (estado) => _anuncio.estado,
                         value: _itemSelecionadoEstado,
                         hint: Text("Estados"),
                         style: TextStyle(
@@ -214,6 +283,7 @@ class _Anuncio extends State<Anuncio> {
                     child: Padding(
                       padding: EdgeInsets.all(8),
                       child: DropdownButtonFormField(
+                        onSaved: (categoria) => _anuncio.categoria,
                         value: _itemSelecionadoCategoria,
                         hint: Text("Categorias"),
                         style: TextStyle(
@@ -237,6 +307,7 @@ class _Anuncio extends State<Anuncio> {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16),
                   child: InputCustomizado(
+                    onSaved: (titulo) => _anuncio.titulo,
                     controller: _controllerTitulo, 
                     hintText: "Titulo",
                     validator: (valor) {
@@ -250,6 +321,7 @@ class _Anuncio extends State<Anuncio> {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16),
                   child: InputCustomizado(
+                    onSaved: (preco) => _anuncio.preco,
                     controller: _controllerPreco, 
                     hintText: "Preço",
                     keyboardType: TextInputType.number,
@@ -268,6 +340,7 @@ class _Anuncio extends State<Anuncio> {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16),
                   child: InputCustomizado(
+                    onSaved: (telefone) => _anuncio.telefone,
                     controller: _controllerTelefone, 
                     hintText: "Telefone",
                     keyboardType: TextInputType.phone,
@@ -286,6 +359,7 @@ class _Anuncio extends State<Anuncio> {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16),
                   child: InputCustomizado(
+                    onSaved: (descricao) => _anuncio.descricao,
                     controller: _controllerDescricao, 
                     hintText: "Descrição (200 caracteres)",
                     maxLines: null,
@@ -302,10 +376,25 @@ class _Anuncio extends State<Anuncio> {
                   onPressed: (){
                     if(_formKey.currentState!.validate()){
 
+                      _formKey.currentState!.save();
+
+                      _salvarAnuncio();
                     }
                   }, 
                   child: const Text("Cadastrar Anúncio")
-                )
+                ),
+
+                _carregando ? const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: LinearProgressIndicator(),
+                )  : Container(),
+
+                _msgErro.isNotEmpty ? Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Center(
+                    child: Text(_msgErro, style: const TextStyle(color: Colors.red)),
+                  ),
+                ) : Container()
               ]
             )
           ),
