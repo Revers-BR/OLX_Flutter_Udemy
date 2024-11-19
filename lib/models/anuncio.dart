@@ -14,7 +14,22 @@ class ModelAnuncio {
 
   final FirebaseFirestore _storage = FirebaseFirestore.instance;
 
-  ModelAnuncio(){
+  ModelAnuncio();
+
+  ModelAnuncio.fromDocumentSnapshot(DocumentSnapshot documentSnapshot){
+
+    id = documentSnapshot.id;
+    estado = documentSnapshot["estado"];
+    categoria = documentSnapshot["categoria"];
+    titulo = documentSnapshot["titulo"];
+    preco = documentSnapshot["preco"];
+    telefone = documentSnapshot["telefone"];
+    descricao = documentSnapshot["descricao"];
+    fotos = List<String>.from(documentSnapshot["fotos"]);
+
+  }
+
+  ModelAnuncio.gerarId(){
 
     CollectionReference anuncios = _storage.collection("meus_anuncios");
     

@@ -169,7 +169,7 @@ class _Anuncio extends State<Anuncio> {
   void initState() {
     super.initState();
     _carregarItensDropdown();
-    _anuncio = ModelAnuncio();
+    _anuncio = ModelAnuncio.gerarId();
   }
 
   @override
