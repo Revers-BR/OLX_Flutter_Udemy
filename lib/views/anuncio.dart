@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:brasil_fields/brasil_fields.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:olx_flutter/models/anuncio.dart';
 import 'package:olx_flutter/views/widget/input_customizado.dart';
@@ -19,7 +22,11 @@ class Anuncio extends StatefulWidget {
 
 class _Anuncio extends State<Anuncio> {
 
+  
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
   final GlobalKey<FormState> _formKey  = GlobalKey<FormState>();
 
   final TextEditingController _controllerTitulo = TextEditingController();
@@ -27,19 +34,19 @@ class _Anuncio extends State<Anuncio> {
   final TextEditingController _controllerTelefone = TextEditingController();
   final TextEditingController _controllerDescricao = TextEditingController();
 
+  final List<File> _imagens = [];
   final List<DropdownMenuItem<String>> _itensDropEstados = [];
   final List<DropdownMenuItem<String>> _itensDropCategorias = [];
 
-  final List<File> _imagens = [];
+  BuildContext? _dialogContext;
 
-  StreamSubscription<TaskSnapshot>? _streamSubscriptionUpload;
-
+  String _msgErro = "";
+  bool _carregando = false;
+  late ModelAnuncio _anuncio;
   String? _itemSelecionadoEstado;
   String? _itemSelecionadoCategoria;
-  bool _carregando = false;
-  String _msgErro = "";
-  late ModelAnuncio _anuncio;
 
+  StreamSubscription<TaskSnapshot>? _streamSubscriptionUpload;
   void _selecionarImagemGaleria() async {
 
     final XFile? xFile = await ImagePicker().pickImage(source: ImageSource.gallery);
@@ -72,10 +79,47 @@ class _Anuncio extends State<Anuncio> {
 
   void _salvarAnuncio() {
 
-    _uploadImagens();
+    _abrirDialog();
+
+    //_uploadImagens();
+
+    final String idUsuario = _auth.currentUser!.uid;
+    
+    _firestore.collection("meus_anuncios")
+      .doc( idUsuario )
+      .collection("anuncios")
+      .doc( _anuncio.id )
+      .set( _anuncio.toMap() )
+      .then((_){
+
+        Navigator.pop(_dialogContext!);
+
+        Navigator.pop(context);
+      });
+        
   }
 
-  _uploadImagens() {
+  void _abrirDialog(){
+
+    showDialog(
+      barrierDismissible: false,
+      context: _dialogContext!, 
+      builder: (_) {
+        return const AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 20),
+              Text("Salvando anúncio...")
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _uploadImagens() {
 
     setState(() => _carregando = true);
 
@@ -154,10 +198,10 @@ class _Anuncio extends State<Anuncio> {
 
                 FormField(
                   initialValue: _imagens,
-                  validator: (imagens) {
-                    if(imagens!.isEmpty)return "Necessário selecionar uma imagem!";
-                    return null;
-                  },
+                  // validator: (imagens) {
+                  //   if(imagens!.isEmpty)return "Necessário selecionar uma imagem!";
+                  //   return null;
+                  // },
                   builder: (field) {
                     return Column(children: [
                       SizedBox(
@@ -259,7 +303,7 @@ class _Anuncio extends State<Anuncio> {
                     child: Padding(
                       padding: EdgeInsets.all(8),
                       child: DropdownButtonFormField(
-                        onSaved: (estado) => _anuncio.estado,
+                        onSaved: (estado) => _anuncio.estado = estado,
                         value: _itemSelecionadoEstado,
                         hint: Text("Estados"),
                         style: TextStyle(
@@ -283,7 +327,7 @@ class _Anuncio extends State<Anuncio> {
                     child: Padding(
                       padding: EdgeInsets.all(8),
                       child: DropdownButtonFormField(
-                        onSaved: (categoria) => _anuncio.categoria,
+                        onSaved: (categoria) => _anuncio.categoria = categoria,
                         value: _itemSelecionadoCategoria,
                         hint: Text("Categorias"),
                         style: TextStyle(
@@ -307,7 +351,7 @@ class _Anuncio extends State<Anuncio> {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16),
                   child: InputCustomizado(
-                    onSaved: (titulo) => _anuncio.titulo,
+                    onSaved: (titulo) => _anuncio.titulo = titulo,
                     controller: _controllerTitulo, 
                     hintText: "Titulo",
                     validator: (valor) {
@@ -321,7 +365,7 @@ class _Anuncio extends State<Anuncio> {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16),
                   child: InputCustomizado(
-                    onSaved: (preco) => _anuncio.preco,
+                    onSaved: (preco) => _anuncio.preco = preco,
                     controller: _controllerPreco, 
                     hintText: "Preço",
                     keyboardType: TextInputType.number,
@@ -340,7 +384,7 @@ class _Anuncio extends State<Anuncio> {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16),
                   child: InputCustomizado(
-                    onSaved: (telefone) => _anuncio.telefone,
+                    onSaved: (telefone) => _anuncio.telefone = telefone,
                     controller: _controllerTelefone, 
                     hintText: "Telefone",
                     keyboardType: TextInputType.phone,
@@ -359,7 +403,7 @@ class _Anuncio extends State<Anuncio> {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16),
                   child: InputCustomizado(
-                    onSaved: (descricao) => _anuncio.descricao,
+                    onSaved: (descricao) => _anuncio.descricao = descricao,
                     controller: _controllerDescricao, 
                     hintText: "Descrição (200 caracteres)",
                     maxLines: null,
@@ -377,6 +421,8 @@ class _Anuncio extends State<Anuncio> {
                     if(_formKey.currentState!.validate()){
 
                       _formKey.currentState!.save();
+
+                      _dialogContext = context;
 
                       _salvarAnuncio();
                     }

@@ -22,4 +22,18 @@ class ModelAnuncio {
 
     fotos = [];
   }
+
+  Map<String, dynamic> toMap(){
+
+    return {
+      "id": id,
+      "estado": estado,
+      "categoria": categoria,
+      "titulo": titulo,
+      "preco": preco,
+      "telefone": telefone,
+      "descricao": descricao,
+      "fotos": fotos,
+    };
+  }
 }
