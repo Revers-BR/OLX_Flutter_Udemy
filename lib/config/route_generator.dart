@@ -8,7 +8,7 @@ class RouteGenerator {
 
   static Route<Widget> generateRoute(RouteSettings settings){
 
-    final args = settings.arguments;
+    //final args = settings.arguments;
 
     Widget view = const Anuncios();
 

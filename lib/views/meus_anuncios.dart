@@ -46,7 +46,12 @@ class _MeusAnuncios extends State<MeusAnuncios> {
       .doc( _idUsuario)
       .collection("anuncios")
       .doc( idAnuncio )
-      .delete();
+      .delete()
+      .then(( _ ) {
+        _firestore.collection("anuncios")
+          .doc( idAnuncio )
+          .delete();
+      });
   }
 
   @override

@@ -6,8 +6,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:olx_flutter/config/config.dart';
 import 'package:olx_flutter/models/anuncio.dart';
 import 'package:olx_flutter/views/widget/input_customizado.dart';
 import 'package:validadores/Validador.dart';
@@ -22,9 +22,9 @@ class Anuncio extends StatefulWidget {
 
 class _Anuncio extends State<Anuncio> {
 
+  //final FirebaseStorage _storage = FirebaseStorage.instance;
   
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseStorage _storage = FirebaseStorage.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   final GlobalKey<FormState> _formKey  = GlobalKey<FormState>();
@@ -35,13 +35,15 @@ class _Anuncio extends State<Anuncio> {
   final TextEditingController _controllerDescricao = TextEditingController();
 
   final List<File> _imagens = [];
-  final List<DropdownMenuItem<String>> _itensDropEstados = [];
-  final List<DropdownMenuItem<String>> _itensDropCategorias = [];
+  
+  List<DropdownMenuItem<String>> _itensDropEstados = [];
+  List<DropdownMenuItem<String>> _itensDropCategorias = [];
 
   BuildContext? _dialogContext;
 
-  String _msgErro = "";
-  bool _carregando = false;
+  //String _msgErro = "";
+  //bool _carregando = false;
+
   late ModelAnuncio _anuncio;
   String? _itemSelecionadoEstado;
   String? _itemSelecionadoCategoria;
@@ -60,21 +62,9 @@ class _Anuncio extends State<Anuncio> {
 
   void _carregarItensDropdown(){
 
-    for (var estado in Estados.listaEstadosSigla) {
-      _itensDropEstados.add(
-        DropdownMenuItem(
-          value: estado,
-          child: Text(estado),
-        )
-      );
-    }
+    _itensDropEstados = Configuracoes.getEstados();
 
-    _itensDropCategorias.addAll(const [
-      DropdownMenuItem(value: "auto",   child: Text("Automóvel")),
-      DropdownMenuItem(value: "eletro", child: Text("Eletrônicos")),
-      DropdownMenuItem(value: "imovel", child: Text("Imóvel")),
-      DropdownMenuItem(value: "moda",   child: Text("Moda")),
-    ]);
+    _itensDropCategorias = Configuracoes.getCategorias();
   }
 
   void _salvarAnuncio() {
@@ -92,9 +82,14 @@ class _Anuncio extends State<Anuncio> {
       .set( _anuncio.toMap() )
       .then((_){
 
-        Navigator.pop(_dialogContext!);
+        _firestore.collection("anuncios")
+          .doc( _anuncio.id )
+          .set( _anuncio.toMap() )
+          .then(( _ ) {
+            Navigator.pop(_dialogContext!);
 
-        Navigator.pop(context);
+            Navigator.pop(context);
+          });
       });
         
   }
@@ -119,51 +114,51 @@ class _Anuncio extends State<Anuncio> {
     );
   }
 
-  void _uploadImagens() {
+  // void _uploadImagens() {
 
-    setState(() => _carregando = true);
+  //   setState(() => _carregando = true);
 
-    final Reference pastaRaiz = _storage.ref();
+  //   final Reference pastaRaiz = _storage.ref();
 
-    for (var imagem in _imagens) {
+  //   for (var imagem in _imagens) {
       
-      final nomeImagem = DateTime.now().millisecondsSinceEpoch.toString();
+  //     final nomeImagem = DateTime.now().millisecondsSinceEpoch.toString();
 
-      final Reference arquivo = pastaRaiz
-        .child("meus_arquivos")
-        .child( _anuncio.id )
-        .child( "$nomeImagem.jpg" );
+  //     final Reference arquivo = pastaRaiz
+  //       .child("meus_arquivos")
+  //       .child( _anuncio.id )
+  //       .child( "$nomeImagem.jpg" );
 
-        final UploadTask uploadTask = arquivo.putFile( imagem );
+  //       final UploadTask uploadTask = arquivo.putFile( imagem );
 
-        _streamSubscriptionUpload = uploadTask.snapshotEvents.listen((snapshot) {
-          switch (snapshot.state) {
-            case TaskState.canceled:
-            case TaskState.error:
-            case TaskState.paused:
-              setState(() {
-                _carregando = false;
-                _msgErro = "erro ao fazer upload das imagens";
-              });
-              break;
-            case TaskState.running:
-              setState(() => _carregando = true);
-              break;
-            case TaskState.success:
-              snapshot.ref.getDownloadURL().then((url){
-                _anuncio.fotos.add( url );
-                setState(() => _carregando = false);
-              });
-          }
-        })..onError((error){
-          setState(() {
-                _carregando = false;
-                _msgErro = "erro ao fazer upload das imagens";
-              });
-        });
-    }
+  //       _streamSubscriptionUpload = uploadTask.snapshotEvents.listen((snapshot) {
+  //         switch (snapshot.state) {
+  //           case TaskState.canceled:
+  //           case TaskState.error:
+  //           case TaskState.paused:
+  //             setState(() {
+  //               _carregando = false;
+  //               _msgErro = "erro ao fazer upload das imagens";
+  //             });
+  //             break;
+  //           case TaskState.running:
+  //             setState(() => _carregando = true);
+  //             break;
+  //           case TaskState.success:
+  //             snapshot.ref.getDownloadURL().then((url){
+  //               _anuncio.fotos.add( url );
+  //               setState(() => _carregando = false);
+  //             });
+  //         }
+  //       })..onError((error){
+  //         setState(() {
+  //               _carregando = false;
+  //               _msgErro = "erro ao fazer upload das imagens";
+  //             });
+  //       });
+  //   }
 
-  }
+  // }
 
   @override
   void initState() {
@@ -301,12 +296,12 @@ class _Anuncio extends State<Anuncio> {
                 Row(children: [
                   Expanded(
                     child: Padding(
-                      padding: EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(8),
                       child: DropdownButtonFormField(
                         onSaved: (estado) => _anuncio.estado = estado,
                         value: _itemSelecionadoEstado,
-                        hint: Text("Estados"),
-                        style: TextStyle(
+                        hint: const Text("Estados"),
+                        style: const TextStyle(
                           color: Colors.black,
                           fontSize: 20
                         ),
@@ -325,12 +320,12 @@ class _Anuncio extends State<Anuncio> {
 
                   Expanded(
                     child: Padding(
-                      padding: EdgeInsets.all(8),
+                      padding: const  EdgeInsets.all(8),
                       child: DropdownButtonFormField(
                         onSaved: (categoria) => _anuncio.categoria = categoria,
                         value: _itemSelecionadoCategoria,
-                        hint: Text("Categorias"),
-                        style: TextStyle(
+                        hint: const Text("Categorias"),
+                        style: const TextStyle(
                           color: Colors.black,
                           fontSize: 20
                         ),
@@ -430,17 +425,17 @@ class _Anuncio extends State<Anuncio> {
                   child: const Text("Cadastrar Anúncio")
                 ),
 
-                _carregando ? const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  child: LinearProgressIndicator(),
-                )  : Container(),
+                // _carregando ? const Padding(
+                //   padding: EdgeInsets.symmetric(vertical: 8),
+                //   child: LinearProgressIndicator(),
+                // )  : Container(),
 
-                _msgErro.isNotEmpty ? Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Center(
-                    child: Text(_msgErro, style: const TextStyle(color: Colors.red)),
-                  ),
-                ) : Container()
+                // _msgErro.isNotEmpty ? Padding(
+                //   padding: const EdgeInsets.all(8),
+                //   child: Center(
+                //     child: Text(_msgErro, style: const TextStyle(color: Colors.red)),
+                //   ),
+                // ) : Container()
               ]
             )
           ),
