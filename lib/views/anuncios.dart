@@ -81,6 +81,18 @@ class _Anuncios extends State<Anuncios> {
       .snapshots()
       .listen(_streamController.add);
   }
+  
+  void _filtrarAnuncios(){
+    
+    Query query = _firestore.collection("anuncios");
+
+    if(_itemSelecionadoEstado != null) query = query.where("estado", isEqualTo: _itemSelecionadoEstado);
+    if(_itemSelecionadoCategoria != null) query = query.where("categoria", isEqualTo: _itemSelecionadoCategoria);
+      
+    _streamSubscription = query
+      .snapshots()
+      .listen(_streamController.add) as StreamSubscription<QuerySnapshot<Map<String, dynamic>>>;
+  }
 
   @override
   void initState() {
@@ -127,10 +139,11 @@ class _Anuncios extends State<Anuncios> {
                 child:  DropdownButtonHideUnderline(
                   child: Center(
                     child: DropdownButton(
-                      items: _itensDropCategoria, 
-                      value: _itemSelecionadoCategoria,
-                      onChanged: (categoria) => setState(() {
-                        _itemSelecionadoCategoria = categoria;
+                      items: _itensDropEstado, 
+                      value: _itemSelecionadoEstado,
+                      onChanged: (estado) => setState(() {
+                        _itemSelecionadoEstado = estado;
+                        _filtrarAnuncios();
                       }),
                       iconEnabledColor: const Color(0xff9c27b0),
                       style: const TextStyle(
@@ -150,10 +163,11 @@ class _Anuncios extends State<Anuncios> {
                 child:  DropdownButtonHideUnderline(
                   child: Center(
                     child: DropdownButton(
-                      items: _itensDropEstado, 
-                      value: _itemSelecionadoEstado,
-                      onChanged: (estado) => setState(() {
-                        _itemSelecionadoEstado = estado;
+                      items: _itensDropCategoria, 
+                      value: _itemSelecionadoCategoria,
+                      onChanged: (categoria) => setState(() {
+                        _itemSelecionadoCategoria = categoria;
+                        _filtrarAnuncios();
                       }),
                       iconEnabledColor: const Color(0xff9c27b0),
                       style: const TextStyle(
@@ -187,12 +201,15 @@ class _Anuncios extends State<Anuncios> {
 
                   if(snapshot.hasError) return const Center(child: Text("Erro ao carregar os dados!"));
 
+                  if(snapshot.hasData && snapshot.data!.docs.isEmpty) return const Center(child: Text("Nenhum anúncio encontrado!"));
+                  
                   final QuerySnapshot<Object?>? querySnapshot = snapshot.data;
                   
                   return Expanded(
                     child: ListView.builder(
                       itemCount: querySnapshot!.docs.length,
                       itemBuilder: (_, index){
+
 
                         final List<DocumentSnapshot> anuncios = querySnapshot.docs.toList();
                         final DocumentSnapshot documentSnapshot = anuncios[index];
