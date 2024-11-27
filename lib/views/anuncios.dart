@@ -219,7 +219,10 @@ class _Anuncios extends State<Anuncios> {
                         return ItemAnuncio(
                           anuncio: anuncio,
                           onTap: () {
-                            
+                            Navigator.pushNamed(
+                              context, "/detalhes-anuncios",
+                              arguments: anuncio
+                            );
                           },
                         );
                       }

@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:olx_flutter/views/login.dart';
 import 'package:olx_flutter/views/anuncio.dart';
 import 'package:olx_flutter/views/anuncios.dart';
-import 'package:olx_flutter/views/login.dart';
+import 'package:olx_flutter/models/anuncio.dart';
 import 'package:olx_flutter/views/meus_anuncios.dart';
+import 'package:olx_flutter/views/detalhes_anuncio.dart';
 
 class RouteGenerator {
 
   static Route<Widget> generateRoute(RouteSettings settings){
 
-    //final args = settings.arguments;
+    final args = settings.arguments;
 
     Widget view = const Anuncios();
 
@@ -24,6 +26,9 @@ class RouteGenerator {
         break;
       case "/meus-anuncios":
         view = const MeusAnuncios();
+        break;
+      case "/detalhes-anuncios":
+        view = DetalhesAnuncio(args as ModelAnuncio);
         break;
       default:
         return erroRota();

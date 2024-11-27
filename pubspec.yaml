@@ -42,6 +42,7 @@ dependencies:
   image_picker: ^1.1.2
   brasil_fields: ^1.15.0
   validadores: ^1.0.9
+  card_swiper: ^3.0.1
 
 dev_dependencies:
   flutter_test:
